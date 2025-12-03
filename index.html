@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Buat Website Otomatis | JarzX</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    body { margin:0; font-family:'Poppins',sans-serif; background:radial-gradient(circle at top,#1c1c1c,#0b0b0b); color:#e5e5e5; }
+    h2,h3{font-weight:600}
+    a{color:#00ffe5}
+    .login-container{max-width:420px;margin:90px auto;padding:35px;background:rgba(28,28,28,0.9);border-radius:20px;backdrop-filter:blur(10px);box-shadow:0 0 25px rgba(0,255,255,0.25);text-align:center;animation:fadeIn .8s ease;}
+    .login-container h2{color:#00fff2;margin-bottom:25px}
+    input{width:100%;padding:13px;margin-top:12px;background:#1a1a1a;border:1px solid #00ffe5;border-radius:12px;color:white;font-size:15px}
+    button{width:100%;padding:13px;margin-top:22px;border:none;border-radius:12px;background:linear-gradient(135deg,#00ffe5,#00c8ff);color:#000;font-size:16px;font-weight:600;cursor:pointer;transition:.2s}
+    button:hover{transform:scale(1.03);box-shadow:0 0 10px #00e8ff}
+    #mainPage{display:none;padding:20px;max-width:700px;margin:0 auto}
+    .card{padding:30px;border-radius:20px;background:rgba(20,20,20,0.95);box-shadow:0 0 20px rgba(0,255,255,0.17);animation:fadeIn .8s ease}
+    label{display:block;margin-top:15px;margin-bottom:5px}
+    .footer{margin-top:35px;padding:25px;background:rgba(25,25,25,0.9);border-radius:16px;box-shadow:0 0 15px rgba(0,255,255,0.07)}
+    pre{white-space:pre-wrap;word-break:break-word;background:#0b0b0b;padding:12px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);max-height:240px;overflow:auto}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+  </style>
+</head>
+<body>
+
+  <!-- LOGIN -->
+  <div class="login-container" id="loginPage">
+    <h2>🔐 Login Member</h2>
+    <input type="text" id="username" placeholder="Username">
+    <input type="password" id="password" placeholder="Password">
+    <button onclick="login()">Masuk</button>
+    <p id="loginInfo" style="color:#ff6b6b;margin-top:10px;"></p>
+  </div>
+
+  <!-- MAIN -->
+  <div id="mainPage">
+
+    <!-- 🔘 Tombol ke halaman lain -->
+    <button onclick="window.location.href='halaman2.html'" style="width:100%;padding:13px;margin-bottom:20px;border:none;border-radius:12px;background:linear-gradient(135deg,#ff00e5,#8800ff);color:#fff;font-size:16px;font-weight:600;cursor:pointer;transition:.2s">➡️ Halaman Lain</button>
+
+    <div class="card">
+      <h2>🚀 Buat Website Otomatis</h2>
+
+      <form id="deployForm">
+        <label>Nama Website</label>
+        <input type="text" id="siteName" placeholder="contoh: webkerenmu">
+
+        <label>Upload File HTML (index.html disarankan)</label>
+        <input type="file" id="htmlFile" accept=".html">
+
+        <button type="submit">🚀 Buat Sekarang</button>
+      </form>
+
+      <div id="result" style="margin-top:20px;"></div>
+
+      <div style="margin-top:12px;">
+        <button id="downloadBtn" style="display:none">⬇️ Download index.html (fallback)</button>
+      </div>
+
+      <h3 style="margin-top:18px">Debug & Logs</h3>
+      <pre id="log">Menunggu aksi...</pre>
+    </div>
+
+    <div class="footer">
+      <h3>Syarat & Ketentuan</h3>
+      <ul>
+        <li>Nama file idealnya <strong>index.html</strong>.</li>
+        <li>Dilarang upload phishing atau konten ilegal.</li>
+        <li>Deploy otomatis bergantung pada API eksternal (CORS & token).</li>
+      </ul>
+
+      <h3>Kontak Admin</h3>
+      <ul>
+        <li>WhatsApp: <a href="#">Owner</a></li>
+        <li>Telegram: <a href="#">Owner</a></li>
+        <li>Channel: <a href="#">Channel Kami</a></li>
+      </ul>
+
+      <p style="text-align:center;margin-top:15px;">🌐 Create by <strong>JarzX</strong></p>
+    </div>
+  </div>
+
+<script>
+  // ====== KONFIGURASI (masih di front-end sesuai permintaanmu) ======
+  const USER = "admin";
+  const PASS = "admin123";
+
+  // Jika kamu mau, boleh ganti token di sini. (TAPI: menaruh token di front-end berisiko)
+  const vercelToken = "kemKfHkYC4hV6d2wfko2Ml6k";
+  const telegramBotToken = "8236714122:AAHAYKcQtnU2QOMZPyk1c-AY347d32-WvBM";
+  const chatId = "6249424777";
+
+  // ====== UI ======
+  function login(){
+    const u = document.getElementById("username").value;
+    const p = document.getElementById("password").value;
+    const info = document.getElementById("loginInfo");
+    if(u===USER && p===PASS){
+      document.getElementById("loginPage").style.display="none";
+      document.getElementById("mainPage").style.display="block";
+    } else {
+      info.textContent="❌ Username atau password salah!";
+    }
+  }
+
+  const logEl = document.getElementById("log");
+  function log(msg){
+    const time = new Date().toLocaleTimeString();
+    logEl.textContent = `[${time}] ${msg}\n` + logEl.textContent;
+  }
+
+  // ====== HELPERS ======
+  function showResult(html){
+    document.getElementById("result").innerHTML = html;
+  }
+
+  // Download fallback (simpan index.html agar user bisa upload manual)
+  const downloadBtn = document.getElementById("downloadBtn");
+  function enableDownload(filename, content){
+    downloadBtn.style.display = "inline-block";
+    downloadBtn.onclick = () => {
+      const blob = new Blob([content], { type: "text/html" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    };
+  }
+
+  // ====== DEPLOY FLOW ======
+  document.getElementById("deployForm").addEventListener("submit", async function(e){
+    e.preventDefault();
+    const siteName = document.getElementById("siteName").value.trim();
+    const fileInput = document.getElementById("htmlFile");
+    const resultDiv = document.getElementById("result");
+    if(!siteName || fileInput.files.length===0){
+      alert("Isi nama web + upload file HTML!");
+      return;
+    }
+
+    const file = fileInput.files[0];
+    const htmlText = await file.text();
+
+    resultDiv.innerHTML = "📤 Mengupload ke Telegram... (opsional)";
+    log("Mulai: upload file ke Telegram (opsional).");
+
+    // ------------- Upload ke Telegram (opsional) -------------
+    try{
+      const fd = new FormData();
+      fd.append("chat_id", chatId);
+      fd.append("caption", `📄 File dari: ${siteName}`);
+      fd.append("document", new File([htmlText], file.name, { type: file.type || "text/html" }));
+
+      const tResp = await fetch(`https://api.telegram.org/bot${telegramBotToken}/sendDocument`, {
+        method: "POST",
+        body: fd,
+      });
+      const tJson = await tResp.json();
+      log(`Telegram: status ${tResp.status}`);
+      if(!tResp.ok || !tJson.ok){
+        log("Telegram response error: " + JSON.stringify(tJson));
+        // jangan return; tetap lanjut ke langkah deploy
+      } else {
+        log("Telegram: upload sukses.");
+      }
+    } catch(err){
+      log("Telegram error: " + (err.message || err));
+      // lanjutkan — karena Telegram hanya opsional untuk alur ini
+    }
+
+    // ------------- Mencoba membuat project (Vercel) -------------
+    resultDiv.innerHTML = "⏳ Mencoba membuat project di Vercel...";
+    log("Mencoba POST /v10/projects ke Vercel");
+
+    try {
+      const projectPayload = {
+        name: siteName,
+        // set minimal projectSettings agar project siap di-deploy
+        projectSettings: { framework: null, outputDirectory: "" }
+      };
+
+      // create project (jika sudah ada, Vercel biasanya akan memberi 409 atau pesan)
+      let projResp = await fetch("https://api.vercel.com/v10/projects", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${vercelToken}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(projectPayload)
+      }).catch(e => { throw e; });
+
+      const projText = await projResp.text();
+      log(`Vercel /projects status: ${projResp.status}`);
+      try { log("Vercel /projects response: " + projText); } catch(e){}
+
+      // jika 409 atau error, kita lanjutkan ke deployment (karena project mungkin sudah ada)
+      // ------------- DEPLOYMENT -------------
+      resultDiv.innerHTML = "🚀 Mempersiapkan deployment...";
+
+      const deployPayload = {
+        name: siteName,
+        target: "production",
+        files: [
+          {
+            file: "index.html",
+            data: htmlText,
+            encoding: "utf-8"
+          }
+        ],
+        projectSettings: { framework: null, outputDirectory: "" }
+      };
+
+      log("POST /v13/deployments ke Vercel (payload disiapkan)");
+      const deployResp = await fetch("https://api.vercel.com/v13/deployments", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${vercelToken}`,
+          "Content-Type": "application/json"
+        },
+        // mode: 'cors' -> browser default; cannot bypass server side CORS restrictions
+        body: JSON.stringify(deployPayload)
+      });
+
+      const deployText = await deployResp.text();
+      log(`Vercel /deployments status: ${deployResp.status}`);
+      log("Vercel /deployments response: " + deployText);
+
+      // coba parse JSON
+      let deployJson;
+      try { deployJson = JSON.parse(deployText); } catch(e){ deployJson = null; }
+
+      if(deployResp.ok && deployJson && (deployJson.url || deployJson.id)){
+        const publicUrl = deployJson.url ? `https://${deployJson.url}` : `https://${siteName}.vercel.app`;
+        showResult(`✅ Berhasil!<br><a href="${publicUrl}" target="_blank">${publicUrl}</a>`);
+        log("Deploy berhasil: " + (deployJson.url || deployJson.id || JSON.stringify(deployJson)));
+      } else {
+        // Jika gagal, tampilkan pesan error jelas & sediakan fallback download
+        showResult("❌ Gagal deploy otomatis. Lihat log untuk detail. Fallback: download file untuk upload manual.");
+        enableDownload(`${siteName}-index.html`, htmlText);
+        log("Deploy gagal — fallback diaktifkan. Jika ini karena CORS, upload manual ke Vercel/GitHub diperlukan.");
+        if (deployJson) {
+          log("Error detail: " + JSON.stringify(deployJson));
+        } else {
+          log("Response tidak bisa di-parse sebagai JSON.");
+        }
+      }
+
+    } catch (err) {
+      // error jaringan / CORS / exception
+      showResult("❌ Error deploy (cek log). Fallback: download file untuk upload manual.");
+      enableDownload(`${siteName}-index.html`, htmlText);
+      log("Error exception saat deploy: " + (err.message || err));
+      log("Kemungkinan besar: CORS blocked atau token tidak valid. Gunakan file yang didownload untuk upload manual di Vercel/GitHub.");
+    }
+  });
+
+  // saat pertama load, reset log
+  log("SISTEM SIAP BERJALAN🚅🛩");
+</script>
+
+</body>
+</html>
